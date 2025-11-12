@@ -4,13 +4,35 @@
     <meta charset="UTF-8">
     <title>Main</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Ruka</h1>
-        <input type="search" placeholder="Search..." class="search-box">
-    </div>
+<div class="container">
+    <h1>Ruka</h1>
+    <input type="search" id="searchInput" placeholder="Search..." class="search-box" autocomplete="off">
+</div>
+
+<script>
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+        window.bridge = channel.objects.Qt;
+    });
+
+    const searchInput = document.getElementById('searchInput');
+
+    searchInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query && window.bridge) {
+                window.bridge.search(query);
+            }
+        }
+    });
+
+    window.addEventListener('load', function() {
+        searchInput.focus();
+    });
+</script>
 
 </body>
 </html>

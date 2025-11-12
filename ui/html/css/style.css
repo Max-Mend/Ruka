@@ -15,6 +15,11 @@ body {
     width: 100%;
     max-width: 900px;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
     transition: all 0.3s ease;
 }
 
@@ -23,28 +28,26 @@ h1 {
     font-weight: 600;
     color: #ffffff;
     letter-spacing: -0.02em;
-    margin-bottom: 300px;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     user-select: none;
+    margin: 0;
 }
 
 .search-box {
-    position: relative;
-    top: -275px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: clamp(250px, 60vw, 600px);
     height: 48px;
-    margin: 0 auto;
     border-radius: 25px;
     border: none;
     outline: none;
-    padding: 15px;
+    padding: 0 10px;
     background-color: #ffffff;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     transition: box-shadow 0.25s ease, transform 0.25s ease;
+    font-size: 16px;
 }
 
 .search-box:hover,
@@ -58,7 +61,7 @@ h1 {
     border: none;
     outline: none;
     font-size: 1rem;
-    padding: 0 18px;
+    padding: 0 16px;
     background: transparent;
 }
 
@@ -84,9 +87,12 @@ h1 {
 }
 
 @media (max-width: 600px) {
+    .container {
+        gap: 25px;
+    }
+
     h1 {
-        margin-bottom: 25px;
-        font-size: clamp(1.5rem, 6vw, 2.2rem);
+        font-size: clamp(1.6rem, 6vw, 2.2rem);
     }
 
     .search-box {
@@ -96,6 +102,6 @@ h1 {
 
     .search-box input[type="text"] {
         font-size: 0.95rem;
-        padding: 0 14px;
+        padding: 0 12px;
     }
 }

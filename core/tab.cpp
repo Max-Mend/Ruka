@@ -1,5 +1,6 @@
 #include "tab.h"
 #include "search.h"
+#include "bridge.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -10,6 +11,8 @@
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
 #include <QWebEnginePage>
+#include <QWebChannel>
+#include <QRegularExpression>
 
 BrowserTab::BrowserTab(QWidget *parent) : QWidget(parent)
 {
@@ -26,6 +29,15 @@ BrowserTab::BrowserTab(QWidget *parent) : QWidget(parent)
     webView = new QWebEngineView(this);
     webView->setPage(new QWebEnginePage(profile, webView));
 
+    QWebChannel *channel = new QWebChannel(this);
+    webView->page()->setWebChannel(channel);
+
+    QString bridgeName = QStringLiteral("bridge");
+    Bridge *bridge = new Bridge(this);
+    channel->registerObject(QStringLiteral("Qt"), bridge);
+
+    connect(bridge, &Bridge::searchRequested, this, &BrowserTab::jsSearch);
+
     backBtn    = new QPushButton(this);
     forwardBtn = new QPushButton(this);
     refreshBtn = new QPushButton(this);
@@ -37,11 +49,11 @@ BrowserTab::BrowserTab(QWidget *parent) : QWidget(parent)
     refreshBtn->setIcon(QIcon::fromTheme("view-refresh"));
     goBtn->setIcon(QIcon::fromTheme("go-jump"));
 
-    backBtn->setToolTip("Назад");
-    forwardBtn->setToolTip("Вперед");
-    refreshBtn->setToolTip("Оновити");
-    goBtn->setToolTip("Перейти");
-    addressBar->setPlaceholderText("Пошук Google або URL...");
+    backBtn->setToolTip("Back");
+    forwardBtn->setToolTip("Forward");
+    refreshBtn->setToolTip("Update");
+    goBtn->setToolTip("Go to");
+    addressBar->setPlaceholderText("Search...");
 
     backBtn->setFlat(true);
     forwardBtn->setFlat(true);
@@ -62,8 +74,6 @@ BrowserTab::BrowserTab(QWidget *parent) : QWidget(parent)
     mainLayout->addWidget(webView);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-
-    webView->load(QUrl("https://www.google.com"));
 
     connect(backBtn,    &QPushButton::clicked, webView, &QWebEngineView::back);
     connect(forwardBtn, &QPushButton::clicked, webView, &QWebEngineView::forward);
@@ -87,20 +97,77 @@ void BrowserTab::searchOrNavigate(const QString &text)
     QString input = text.trimmed();
     if (input.isEmpty()) return;
 
-    QUrl url = QUrl::fromUserInput(input);
-    if (url.isValid() && !url.host().isEmpty()) {
+    bool isUrl = false;
+    QUrl url;
+
+    // Перевірка 1: Чи починається з http://, https://, file://
+    if (input.startsWith("http://") || input.startsWith("https://") || input.startsWith("file://")) {
+        isUrl = true;
+        url = QUrl(input);
+    }
+    // Перевірка 2: Чи є це localhost або IP адреса
+    else if (input.startsWith("localhost") || input.startsWith("127.0.0.1") ||
+             QRegularExpression("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}").match(input).hasMatch()) {
+        isUrl = true;
+        url = QUrl::fromUserInput(input);
+    }
+    // Перевірка 3: Чи містить крапку і виглядає як домен
+    else if (input.contains('.') && !input.contains(' ')) {
+        QStringList parts = input.split('.');
+        // Перевіряємо що після останньої крапки є 2-4 символи (TLD)
+        if (parts.size() >= 2 && parts.last().length() >= 2 && parts.last().length() <= 6) {
+            // Перевіряємо що частини домену не містять недопустимих символів
+            bool validDomain = true;
+            QRegularExpression domainRegex("^[a-zA-Z0-9-]+$");
+            for (const QString &part : parts) {
+                if (!domainRegex.match(part).hasMatch()) {
+                    validDomain = false;
+                    break;
+                }
+            }
+            if (validDomain) {
+                isUrl = true;
+                url = QUrl::fromUserInput("https://" + input);
+            }
+        }
+    }
+
+    if (isUrl && url.isValid()) {
         webView->load(url);
     } else {
+        // Це пошуковий запит
         std::string query = input.toUtf8().toStdString();
         std::string searchUrl = search_url(query);
         webView->load(QUrl(QString::fromStdString(searchUrl)));
     }
 }
 
-void BrowserTab::go() { searchOrNavigate(addressBar->text()); }
-void BrowserTab::updateUrl(const QUrl &url) { addressBar->setText(url.toString()); }
+void BrowserTab::go()
+{
+    searchOrNavigate(addressBar->text());
+}
+
+void BrowserTab::updateUrl(const QUrl &url)
+{
+    if (url.scheme() == "file" || url.scheme() == "qrc") {
+        addressBar->setText("");
+    } else {
+        addressBar->setText(url.toString());
+    }
+}
+
 void BrowserTab::updateButtons()
 {
     backBtn->setEnabled(webView->history()->canGoBack());
     forwardBtn->setEnabled(webView->history()->canGoForward());
+}
+
+void BrowserTab::jsSearch(const QString &query)
+{
+    searchOrNavigate(query);
+}
+
+void BrowserTab::setAddressBarText(const QString &text)
+{
+    addressBar->setText(text);
 }

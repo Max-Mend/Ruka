@@ -16,11 +16,19 @@ public:
     void setUrl(const QUrl &url);
     void resize(int w, int h) { QWidget::resize(w, h); }
     void show() { QWidget::show(); }
+    QWebEngineView* getWebView() { return webView; }
+    void setAddressBarText(const QString &text);
+
+    signals:
+        void createNewTab(const QUrl &url);
 
 private slots:
     void go();
     void updateUrl(const QUrl &url);
     void updateButtons();
+
+public slots:
+    void jsSearch(const QString &query);
 
 private:
     QWebEngineView *webView;
@@ -29,9 +37,6 @@ private:
     QPushButton    *forwardBtn;
     QPushButton    *refreshBtn;
     QPushButton    *goBtn;
-    QMetaMethod *titleChanged;
-    QMetaMethod *onTitleChanged;
-    QMetaMethod *onUrlChanged;
 
     void searchOrNavigate(const QString &text);
 };

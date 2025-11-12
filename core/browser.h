@@ -13,15 +13,17 @@ class BrowserWindow : public QMainWindow
 public:
     explicit BrowserWindow(QWidget *parent = nullptr);
 
-private slots:
+public slots:
     void addNewTab();
-    void closeTab(int index);
+    void createNewTabWithUrl(const QUrl &url);
 
+private slots:
+    void closeTab(int index);
     void updateTabTitle();
 
 private:
     QTabWidget *tabWidget;
-    void createTab(const QUrl &url = QUrl("https://www.google.com"));
+    void createTab(const QUrl &url = QUrl());
 };
 
 #endif

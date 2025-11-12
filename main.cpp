@@ -6,6 +6,9 @@
 
 int main(int argc, char *argv[])
 {
+    qputenv("FONTCONFIG_PATH", "/etc/fonts");
+    qputenv("FONTCONFIG_FILE", "/etc/fonts/fonts.conf");
+
     QApplication app(argc, argv);
 
     BrowserWindow browser;
