@@ -1,3 +1,6 @@
+#include "browser.h"
+#include "tab.h"
+
 #include <QIcon>
 #include <QToolBar>
 #include <QAction>
@@ -5,13 +8,11 @@
 #include <QFile>
 #include <QHBoxLayout>
 #include <QTabWidget>
+#include <QTabBar>
 #include <QToolButton>
 #include <QUrl>
 #include <QShortcut>
 #include <QKeySequence>
-
-#include "browser.h"
-#include "tab.h"
 
 BrowserWindow::BrowserWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -21,23 +22,29 @@ BrowserWindow::BrowserWindow(QWidget *parent) : QMainWindow(parent)
     tabWidget = new QTabWidget(this);
     tabWidget->setTabsClosable(true);
     tabWidget->setMovable(true);
+    tabWidget->setDocumentMode(true);
+    tabWidget->setElideMode(Qt::ElideRight);
+
+    // Вкладки зліва
+    tabWidget->setTabPosition(QTabWidget::North);
+    tabWidget->tabBar()->setExpanding(false);
+
     setCentralWidget(tabWidget);
 
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &BrowserWindow::closeTab);
     connect(tabWidget, &QTabWidget::currentChanged, this, &BrowserWindow::updateTabTitle);
 
-    auto *newTabAction = new QAction("+", this);
-    newTabAction->setToolTip("New tab");
-    tabWidget->setCornerWidget(new QWidget(this), Qt::TopLeftCorner);
-    auto *corner = qobject_cast<QWidget*>(tabWidget->cornerWidget());
-    auto *layout = new QHBoxLayout(corner);
-    layout->setContentsMargins(0, 0, 0, 0);
-    auto *btn = new QToolButton(corner);
-    btn->setDefaultAction(newTabAction);
-    btn->setFixedSize(30, 30);
-    layout->addWidget(btn);
+    // Кнопка для нової вкладки
+    auto *newTabBtn = new QToolButton(this);
+    newTabBtn->setText("+");
+    newTabBtn->setToolTip("Нова вкладка (Ctrl+T)");
+    newTabBtn->setAutoRaise(true);
+    newTabBtn->setFixedSize(30, 30);
 
-    connect(newTabAction, &QAction::triggered, this, &BrowserWindow::addNewTab);
+    // Встановлюємо кнопку справа від вкладок
+    tabWidget->setCornerWidget(newTabBtn, Qt::TopLeftCorner);
+
+    connect(newTabBtn, &QToolButton::clicked, this, &BrowserWindow::addNewTab);
 
     // Гарячі клавіші
     auto *newTabShortcut = new QShortcut(QKeySequence::AddTab, this);
