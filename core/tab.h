@@ -1,7 +1,6 @@
-#ifndef WEB_BROWSER_TAB_H
-#define WEB_BROWSER_TAB_H
+#ifndef TAB_H
+#define TAB_H
 
-#include <qmetaobject.h>
 #include <QWidget>
 #include <QWebEngineView>
 
@@ -11,34 +10,30 @@ class QPushButton;
 class BrowserTab : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit BrowserTab(QWidget *parent = nullptr);
     void setUrl(const QUrl &url);
-    void resize(int w, int h) { QWidget::resize(w, h); }
-    void show() { QWidget::show(); }
-    QWebEngineView* getWebView() { return webView; }
     void setAddressBarText(const QString &text);
-
-    signals:
-        void createNewTab(const QUrl &url);
+    QWebEngineView* getWebView() const { return webView; }
 
 private slots:
-    void go();
+    void navigateToAddress();
+    void showMenu();
     void updateUrl(const QUrl &url);
     void updateButtons();
-
-public slots:
     void jsSearch(const QString &query);
+    void savePage();
 
 private:
-    QWebEngineView *webView;
-    QLineEdit      *addressBar;
-    QPushButton    *backBtn;
-    QPushButton    *forwardBtn;
-    QPushButton    *refreshBtn;
-    QPushButton    *goBtn;
-
     void searchOrNavigate(const QString &text);
+
+    QWebEngineView *webView;
+    QPushButton *backBtn;
+    QPushButton *forwardBtn;
+    QPushButton *refreshBtn;
+    QPushButton *menuBtn;
+    QLineEdit *addressBar;
 };
 
-#endif
+#endif // TAB_H
